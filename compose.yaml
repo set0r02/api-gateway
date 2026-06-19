@@ -112,7 +112,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      ORDER_DB_URL: ${ORDER_DB_PORT:-jdbc:postgresql://order-db:5432/order_db}
+      ORDER_DB_URL: ${ORDER_DB_URL:-jdbc:postgresql://order-db:5432/order_db}
 
       USER_SERVICE_HOST: user-service
     depends_on:
