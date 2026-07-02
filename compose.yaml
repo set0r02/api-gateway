@@ -8,6 +8,7 @@ services:
       USER_SERVICE_HOST: ${USER_SERVICE_HOST:-user-service}
       AUTH_SERVICE_HOST: ${AUTH_SERVICE_HOST:-auth-service}
       ORDER_SERVICE_HOST: ${ORDER_SERVICE_HOST:-order-service}
+      PAYMENT_SERVICE_HOST: ${PAYMENT_SERVICE_HOST:-payment-service}
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
     depends_on:
       auth-service:

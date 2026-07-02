@@ -24,7 +24,7 @@ spring:
             - Path=/api/orders/**
 
         - id: payment-service
-          uri: http://${PAYMENT_SERVICE_HOST:localhost}:8084
+          uri: http://${PAYMENT_SERVICE_HOST:payment-service}:8084
           predicates:
             - Path=/api/payments/**
 
