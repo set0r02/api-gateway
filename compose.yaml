@@ -8,6 +8,7 @@ services:
       USER_SERVICE_HOST: ${USER_SERVICE_HOST:-user-service}
       AUTH_SERVICE_HOST: ${AUTH_SERVICE_HOST:-auth-service}
       ORDER_SERVICE_HOST: ${ORDER_SERVICE_HOST:-order-service}
+      PAYMENT_SERVICE_HOST: ${PAYMENT_SERVICE_HOST:-payment-service}
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
     depends_on:
       auth-service:
@@ -147,3 +148,60 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
+  mongo:
+    image: mongo:7
+    container_name: payment-service-db
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-paymentdb}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: payment-kafka
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "nc -z localhost 9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MONGO_DB_URI: ${MONGO_DB_URI:-mongodb://mongo:27017/paymentdb}
+      BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS:-kafka:9092}
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
+      RANDOM_NUMBER: ${RANDOM_NUMBER:-https://www.random.org/integers/?num=1&min=1&max=100&col=1&base=10&format=plain}
+
+    depends_on:
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+
